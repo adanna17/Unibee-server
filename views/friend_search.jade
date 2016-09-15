@@ -1,0 +1,23 @@
+extends ./view-template
+
+block styles
+
+block content
+  body(ng-app='mainCtr')
+    .panel.panel-primary(ng-controller='FriendSearch')
+      .panel-heading
+        .panel-title.pull-left
+            h4 검색결과
+        .clearfix
+
+      #resultlist.panel-body
+        ul.chat(ng-repeat='friend in friendsearch')
+          li.left.clearfix
+            span.chat-img.pull-left
+              img.img-circle(src='{{friend.userprofileimage}}')
+              {{friend.nickname}}
+            .text-right
+              | hell
+
+block scripts
+  script(src='/public/controllers/mainCtr-controller.js')
