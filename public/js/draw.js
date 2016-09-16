@@ -26,9 +26,9 @@ $( "#btn_pan" ).click(function() {
 	color = 'black';
 });
 
-$('#btn_color').colorpicker().on('changeColor', function(e) {
-	 color = e.color.toHex();
-});
+// $('#btn_color').colorpicker().on('changeColor', function(e) {
+// 	 color = e.color.toHex();
+// });
 
 $( "#btn_png" ).click(function() {
 
