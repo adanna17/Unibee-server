@@ -11,7 +11,7 @@ router.get('/list', function(req, res){
 
   db.query(queryData, req.user.userid, function (err, results) {
       if (err) {
-        res.send(500);
+        res.sendStatus(500);
       }
       res.json(results);
   });
@@ -21,22 +21,37 @@ router.get('/add', function(req, res){
   res.render('friend_add_form');
 });
 
-router.post('/add', function(req, res){
-  console.log(res.body.friend_id);
+router.post('/search', function(req, res){
 
-  // var addFriend = {
-  //   me_id: req.user.userid,
-  //   friend_id: req.body.friend_id
-  // }
-  //
-  // var queryData = 'INSERT INTO friend SET ? ';
-  //
-  // db.query(queryData, addFriend, function (err, results) {
-  //     if (err) {
-  //       res.send(500);
-  //     }
-  //     console.log('SECCESS FRIEND ADD');
-  // });
+  var queryData = 'SELECT userid, nickname, userprofileimage ';
+  queryData += 'FROM user ';
+  queryData += 'WHERE userid = ? ';
+
+  db.query(queryData, req.body.friendSearch, function (err, results) {
+      if (err) {
+        res.send(500);
+      }
+      res.json(results);
+  });
+
+});
+
+router.get('/add/:result', function(req, res){
+
+  var friend = {
+    me_id: req.user.userid,
+    friend_id: req.params.result
+  }
+
+  var queryData = 'INSERT INTO friend SET ?';
+
+  db.query(queryData, friend, function (err, results) {
+      if (err) {
+        res.sendStatus(500);
+      }
+      res.redirect('/main');
+  });
+
 
 });
 

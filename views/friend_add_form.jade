@@ -4,7 +4,7 @@ block styles
   link(href='/public/css/friend-add-style.css', rel='stylesheet', type='text/css')
 
 block content
-  body(ng-app='mainCtr')
+  body(ng-app='friendCtr')
     nav.navbar.navbar-fixed-top
       .container
         .navbar-header
@@ -16,23 +16,19 @@ block content
           h1 친구추가
         div
           .login-register-form-section
+            form(ng-submit='submit()', ng-controller='friendSearch')
               .input-group
-                input#searchText.form-control(type='text',placeholder='친구 아이디를 입력하세요')
+                input#searchText.form-control(type='text', ng-model='friendSearch', placeholder='친구 아이디를 입력하세요')
                 span.input-group-btn
                   input#searchBtn.btn.btn-default(type='submit', value = '검색')
-
-              .panel.panel-primary(ng-controller='AllUser')
-                .panel-body
-                    ul.chat(ng-repeat='user in alluser')
-                      li.left.clearfix
-                        span.chat-img.pull-left
-                            img.img-circle(src='{{user.userprofileimage}}')
-                            {{user.userid}}
-
+               .wrapper
+                  p(ng-hide='showme') Search result will appear here!
+                  span.friendresult.pull-left(ng-show='showme')
+                      img.img-circle(src='{{userprofileimage}}')
+                      {{nickname}} ({{userid}})
               #center
-                button#selectFriend.btn.btn-custom(type='submit') OK
+                a#btnAddFriend.btn.btn-custom(href='/friend/add/{{userid}}', role='button') OK
                 button.btn.btn-custom(type='button', onclick='history.back(-1)') Cancel
 
 block scripts
-  script(src='/public/controllers/mainCtr-controller.js')
-  script(src='/public/js/refresh-view.js')
+  script(src='/public/controllers/friendCtr-controller.js')

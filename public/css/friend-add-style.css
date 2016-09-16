@@ -69,8 +69,16 @@ body {
     color: #fff;
 }
 
-#selectFriend{
+#btnAddFriend{
+  text-align: center;
   margin-right: 20px;
+}
+.friendresult img{
+    width: 50px;
+    margin-right: 10px;
+}
+.friendresult {
+    padding: 8px;
 }
 
 .found{background-color:yellow;}
@@ -93,6 +101,20 @@ body {
     color: #000;
     overflow-y: scroll;
     height: 250px;
+}
+
+.wrapper {
+  text-align: center;
+  border: 1px dashed #95a5a6;
+  height: 70px;
+  margin-top: 16px;
+  border-radius: 4px;
+  position: relative;
+  font-size: 15px;
+}
+
+.wrapper p {
+  line-height: 31px;
 }
 
 ::-webkit-scrollbar-track

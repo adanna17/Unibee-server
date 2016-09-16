@@ -40,10 +40,6 @@ app.get('/main', function(req, res){
 });
 //홈 화면
 
-app.get('/friend', function(req, res){
-    res.render('friend_list');
-});
-
 
 io.sockets.on('connection', function(socket){
   console.log('a user connected');
