@@ -109,3 +109,14 @@ exports.removeHitItem = function(room, itemName) {
     db.storeProject(room);
   }
 }
+
+// Add image to canvas
+exports.addImage = function(room, img, position, name) {
+  var project = projects[room].project;
+  if (project && project.activeLayer) {
+    var raster = new drawing.Raster(img);
+    raster.position = new drawing.Point(position[1], position[2]);
+    raster.name = name;
+    db.storeProject(room);
+  }
+}

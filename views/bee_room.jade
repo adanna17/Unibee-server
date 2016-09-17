@@ -12,7 +12,6 @@ block content
   h1= hello
 
   .btn-group(role='group')
-    button#btn_pan.btn.btn-default(type='button') default pan
     button#btn_color.btn.btn-default(type='button') colorpicker
     button#btn_png.btn.btn-default(type='button') exportPNG
 
@@ -33,7 +32,6 @@ block content
   h1 Uniee whieboard
   h3 Image File Reader
   div
-    | Select an image file:
     input#fileInput(type='file')
 
   button#btn_img_up.btn.btn-default(type='button') +
@@ -53,4 +51,3 @@ block scripts
   //paper.js
   script(type='text/javascript', src='/node_modules/paper/dist/paper-full.js')
   script(type='text/paperscript', src='/public/js/draw.js', canvas='myCanvas')
-  script(type='text/javascript', src='/public/js/images.js')

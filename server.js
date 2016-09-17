@@ -90,6 +90,11 @@ io.sockets.on('connection', function(socket){
     draw.removeHitItem(room, name);
   });
 
+  socket.on('image:add', function(room, img, position, name){
+    socket.broadcast.to(room).emit('image:add', img, position, name);
+    draw.addImage(room, img, position, name);
+  });
+
   socket.on('disconnect', function(){
     console.log('user disconnected');
   });

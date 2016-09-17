@@ -7,12 +7,12 @@ var hitOptions = {
 
 var socket = io();
 var sessionId = "";
-
 var bee_room = window.location.pathname.split('/')[2];
 
 paths = {};
 var path;
 var pathname = '';
+var imagename = '';
 var color = 'black';
 var strokeSlider = $('#ex8').slider({tooltip: 'always'})
 		.on('change', changeThick)
@@ -21,27 +21,40 @@ var strokeSlider = $('#ex8').slider({tooltip: 'always'})
 var thick = 5;
 var isErase =  $('#toggle-erase').prop('checked');
 
-$( "#btn_pan" ).click(function() {
-	thick = 1;
-	color = 'black';
-});
-
 // $('#btn_color').colorpicker().on('changeColor', function(e) {
 // 	 color = e.color.toHex();
 // });
 
 $( "#btn_png" ).click(function() {
-
 	console.log(bee_room);
 });
 
-function changeThick() {
-	console.log('changeThick');
-	thick = strokeSlider.getValue();
-};
 
 $('#toggle-erase').change(function() {
 		isErase = $(this).prop('checked');
+});
+
+// User selects an image from the file browser to upload
+$('#fileInput').bind('change', function(e) {
+	var file = fileInput.files[0];
+	var imageType = /image.*/;
+
+	if (file.type.match(imageType)) {
+		var reader = new FileReader();
+
+		reader.onload = function(e) {
+
+			var img = new Image();
+			img.src = reader.result;
+
+			drawImage(img.src);
+			//socket.emit('loadImage', img.src);
+		}
+
+		reader.readAsDataURL(file);
+	} else {
+		alert('Can not load image!');
+	}
 });
 
 
@@ -60,12 +73,16 @@ $( "#btn_img_delete" ).click(function() {
 	selectObject.remove();
 });
 
+function changeThick() {
+	thick = strokeSlider.getValue();
+};
 
 function drawImage(img){
-	var raster = new Raster({
-		source: img,
-    position: view.center
-  });
+	var raster = new Raster(img);
+	raster.position = view.center;
+	imagename = sessionId + ":image:" + raster.id;
+	raster.name = imagename;
+	socket.emit('image:add', bee_room, img, raster.position, raster.name);
 }
 
 function exportPNG() {
@@ -116,6 +133,10 @@ function onMouseDown(event) {
 				hitItem.remove();
 				view.draw();
 				socket.emit('Hit:remove', bee_room, hitItem.name);
+			}else if (hitResult.type == 'pixel') {
+				selectObject = hitResult.item;
+				console.log(selectObject);
+				selectObject.selected = true;
 			}
 
 		}else{
@@ -190,7 +211,7 @@ function startPath(data, sessionId) {
 	  }
 	);
 
-	pathname = sessionId + ":" + paths[sessionId].id;
+	pathname = sessionId + ":path:" + paths[sessionId].id;
 
   paths[sessionId].add(new Point(data.x,data.y));
 
@@ -301,4 +322,13 @@ socket.on('Hit:remove', function(name) {
 	 var target = project.activeLayer.children[name];
 		target.remove();
 		view.draw();
+});
+
+socket.on('image:add', function(img, position, name) {
+	var raster = new Raster(img);
+	raster.position = new Point(position[1], position[2]);
+	raster.name = name;
+	view.draw();
+	console.log(raster);
+
 });
