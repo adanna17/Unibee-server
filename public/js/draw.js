@@ -135,7 +135,6 @@ function onMouseDown(event) {
 				socket.emit('Hit:remove', bee_room, hitItem.name);
 			}else if (hitResult.type == 'pixel') {
 				selectObject = hitResult.item;
-				console.log(selectObject);
 				selectObject.selected = true;
 			}
 
@@ -202,6 +201,16 @@ function onMouseUp(event) {
 
 }
 
+function onKeyUp(event) {
+  if (event.key == "delete") {
+		var items = paper.project.selectedItems;
+		removeItem(items[0].name);
+		socket.emit('Hit:remove', bee_room, items[0].name);
+
+  }
+}
+
+
 
 function startPath(data, sessionId) {
 
@@ -264,6 +273,12 @@ function pathEndStore(data, pathname, color, thick, user, room) {
 
 }
 
+function removeItem(name) {
+	var target = project.activeLayer.children[name];
+	target.remove();
+	view.draw();
+}
+
 
 socket.emit('subscribe', {room:bee_room});
 
@@ -319,9 +334,7 @@ socket.on('endPath', function(data, pathname, color, thick, user, room) {
 });
 
 socket.on('Hit:remove', function(name) {
-	 var target = project.activeLayer.children[name];
-		target.remove();
-		view.draw();
+	  removeItem(name);
 });
 
 socket.on('image:add', function(img, position, name) {
