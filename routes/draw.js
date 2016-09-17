@@ -78,6 +78,7 @@ exports.pathStoreFinal = function (object, user, room) {
     path.strokeColor = object.color;
     path.strokeWidth = object.thick;
 
+    console.log(object.name);
     path.name = object.name;
     path.add(start_point);
   }
@@ -98,3 +99,13 @@ exports.pathStoreFinal = function (object, user, room) {
   db.storeProject(room);
 
 };
+
+
+// Remove an item from the canvas
+exports.removeHitItem = function(room, itemName) {
+  var project = projects[room].project;
+  if (project && project.activeLayer && project.activeLayer._namedChildren[itemName] && project.activeLayer._namedChildren[itemName][0]) {
+    project.activeLayer._namedChildren[itemName][0].remove();
+    db.storeProject(room);
+  }
+}

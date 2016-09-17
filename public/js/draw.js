@@ -12,7 +12,7 @@ var bee_room = window.location.pathname.split('/')[2];
 
 paths = {};
 var path;
-var segment;
+var pathname = '';
 var color = 'black';
 var strokeSlider = $('#ex8').slider({tooltip: 'always'})
 		.on('change', changeThick)
@@ -26,9 +26,9 @@ $( "#btn_pan" ).click(function() {
 	color = 'black';
 });
 
-$('#btn_color').colorpicker().on('changeColor', function(e) {
-	 color = e.color.toHex();
-});
+// $('#btn_color').colorpicker().on('changeColor', function(e) {
+// 	 color = e.color.toHex();
+// });
 
 $( "#btn_png" ).click(function() {
 
@@ -81,18 +81,18 @@ var entire;
 
 function makeTopRightCircle(){
 
-	if (selectObject_tr) {
-		selectObject_tr.remove();
-	}
-
-	selectObject_tr = new Shape.Circle(
-		new Point(selectObject.bounds.topRight.x, selectObject.bounds.topRight.y), 4);
-	selectObject_tr.fillColor = 'black';
-
-	selectObject_tr.onMouseLeave = function(event) {
-			selectObject_tr.fillColor = 'black';
-	    entire = false;
-	}
+	// if (selectObject_tr) {
+	// 	selectObject_tr.remove();
+	// }
+	//
+	// selectObject_tr = new Shape.Circle(
+	// 	new Point(selectObject.bounds.topRight.x, selectObject.bounds.topRight.y), 4);
+	// selectObject_tr.fillColor = 'black';
+	//
+	// selectObject_tr.onMouseLeave = function(event) {
+	// 		selectObject_tr.fillColor = 'black';
+	//     entire = false;
+	// }
 
 }
 
@@ -111,15 +111,11 @@ function onMouseDown(event) {
 		hitResult = project.hitTest(event.point, hitOptions);
 
 		if (hitResult) {
-			if (hitResult.type == 'stroke' && !selectObject_tr) {
-				hitResult.item.remove();
-			}else if (hitResult.type == 'pixel') {
-				selectObject = hitResult.item;
-				selectObject.selected = true;
-				makeTopRightCircle();
-			}else if (selectObject_tr) {
-				entire = true;
-				selectObject_tr.fillColor = 'red';
+			if (hitResult.type == 'stroke') {
+				var hitItem = hitResult.item;
+				hitItem.remove();
+				view.draw();
+				socket.emit('Hit:remove', bee_room, hitItem.name);
 			}
 
 		}else{
@@ -129,13 +125,16 @@ function onMouseDown(event) {
 				selectObject = null;
 			}
 		}
+
 	}else{
 			startPath(startObject, sessionId);
 			socket.emit('startPath', startObject, sessionId, bee_room);
 	}
+
 }
 
 function onMouseDrag(event) {
+
 	var step        = event.delta / 50;
   var top         = event.middlePoint + step;
   var bottom      = event.middlePoint - step;
@@ -175,8 +174,9 @@ function onMouseUp(event) {
   }
 
 	if (!isErase) {
-		endPath(event.point, sessionId);
-	  socket.emit('endPath', endObject, sessionId, bee_room);
+
+		endPath(endObject, pathname, sessionId);
+	  socket.emit('endPath', endObject, pathname, color, thick, sessionId, bee_room);
 	}
 
 }
@@ -189,6 +189,9 @@ function startPath(data, sessionId) {
 			strokeWidth : data.thick
 	  }
 	);
+
+	pathname = sessionId + ":" + paths[sessionId].id;
+
   paths[sessionId].add(new Point(data.x,data.y));
 
 }
@@ -202,39 +205,41 @@ function continuePath(top, bottom, sessionId) {
 
 }
 
-function endPath(data, sessionId) {
 
-  var path = paths[sessionId];
 
-  path.add(new Point(data.x,data.y));
-  path.closed = true;
-  path.smooth();
+function endPath(data, pathname, sessionId) {
 
-  delete paths[sessionId]
+	var path = paths[sessionId];
+	path.name = pathname;
+	path.add(new Point(data.x,data.y));
+	path.closed = true;
+	path.smooth();
+
+	delete paths[sessionId]
 
 }
 
-var path_to_send = {
-	name: 'jungmin',
-	color: color,
-	thick: thick
-};
 
-function pathEndStore(room, data, sessionId) {
 
-	var path = paths[sessionId];
+function pathEndStore(data, pathname, color, thick, user, room) {
+	var path = paths[user];
 
+	var path_to_send = {
+		name:  pathname,
+		color: color,
+		thick: thick
+	};
+
+	path.name = pathname;
   path.add(new Point(data.x,data.y));
   path.closed = true;
   path.smooth();
 
-	path_to_send.path = paths[sessionId];
+	path_to_send.path = paths[user];
 
-  delete paths[sessionId]
+  delete paths[user]
 
-	console.log(path_to_send);
-
-	socket.emit('final', JSON.stringify(path_to_send), sessionId, room);
+	socket.emit('final', JSON.stringify(path_to_send), user, room);
 
 }
 
@@ -276,8 +281,7 @@ socket.on('loading:end', function() {
 });
 
 
-socket.on('startPath', function(data, user, room)
- {
+socket.on('startPath', function(data, user, room){
 		startPath(data, user);
 });
 
@@ -287,8 +291,14 @@ socket.on('continuePath', function(top, bottom, user, room) {
 		console.log('receive continue from server');
 });
 
-socket.on('endPath', function(data, user, room) {
-		pathEndStore(room, data, user);
+socket.on('endPath', function(data, pathname, color, thick, user, room) {
+		pathEndStore(data, pathname, color, thick, user, room);
 		view.draw();
 		console.log('receive end from server');
+});
+
+socket.on('Hit:remove', function(name) {
+	 var target = project.activeLayer.children[name];
+		target.remove();
+		view.draw();
 });

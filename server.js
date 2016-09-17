@@ -61,7 +61,6 @@ io.sockets.on('connection', function(socket){
       return;
     }
     socket.broadcast.to(room).emit('startPath', data, user);
-    //socket.broadcast.emit('startPath', data, user);
   });
 
   socket.on('continuePath', function(top, bottom, user, room) {
@@ -70,22 +69,25 @@ io.sockets.on('connection', function(socket){
       return;
     }
     socket.broadcast.to(room).emit('continuePath', top, bottom, user);
-    //socket.broadcast.emit('continuePath', top, bottom, user);
   });
 
-  socket.on('endPath', function(data, user, room) {
+  socket.on('endPath', function(data, pathname, color, thick, user, room) {
     if (!projects.projects[room] || !projects.projects[room].project) {
       loadError(socket);
       return;
     }
-    socket.broadcast.to(room).emit('endPath', data, user, room);
-    //socket.broadcast.emit('endPath', data, user);
+    socket.broadcast.to(room).emit('endPath', data, pathname, color, thick, user, room);
   });
 
   socket.on('final', function(data, user, room) {
     draw.pathStoreFinal(JSON.parse(data), user, room);
     //socket.broadcast.to(room).emit('endPath', data, user);
     //socket.broadcast.emit('endPath', data, user);
+  });
+
+  socket.on('Hit:remove', function(room, name){
+    socket.broadcast.to(room).emit('Hit:remove', name);
+    draw.removeHitItem(room, name);
   });
 
   socket.on('disconnect', function(){
