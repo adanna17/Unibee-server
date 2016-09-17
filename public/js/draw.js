@@ -14,6 +14,21 @@ var path;
 var pathname = '';
 var imagename = '';
 var color = 'black';
+
+var leftUp_rightUP;
+var rightUp_rightDown;
+var rightDown_leftDown;
+var leftDown_leftUp;
+
+var leftUpCircle;
+var rightUpCircle;
+var rightDownCircle;
+var leftDownCircle;
+
+var selectObject;
+var selectObject_tr;
+var entire;
+
 var strokeSlider = $('#ex8').slider({tooltip: 'always'})
 		.on('change', changeThick)
 		.data('slider');
@@ -26,9 +41,10 @@ var isErase =  $('#toggle-erase').prop('checked');
 // });
 
 $( "#btn_png" ).click(function() {
-	console.log(bee_room);
-});
 
+	//selectObject.width= 100;
+
+});
 
 $('#toggle-erase').change(function() {
 		isErase = $(this).prop('checked');
@@ -57,12 +73,10 @@ $('#fileInput').bind('change', function(e) {
 	}
 });
 
-
 $( "#btn_img_up" ).click(function() {
 	selectObject.scale(1.2);
 	makeTopRightCircle();
 });
-
 
 $( "#btn_img_down" ).click(function() {
 	selectObject.scale(0.8);
@@ -91,29 +105,6 @@ function exportPNG() {
 	document.write('<img src="'+img+'"/>');
 }
 
-var selectObject;
-var selectObject_tr;
-var entire;
-
-
-function makeTopRightCircle(){
-
-	// if (selectObject_tr) {
-	// 	selectObject_tr.remove();
-	// }
-	//
-	// selectObject_tr = new Shape.Circle(
-	// 	new Point(selectObject.bounds.topRight.x, selectObject.bounds.topRight.y), 4);
-	// selectObject_tr.fillColor = 'black';
-	//
-	// selectObject_tr.onMouseLeave = function(event) {
-	// 		selectObject_tr.fillColor = 'black';
-	//     entire = false;
-	// }
-
-}
-
-
 function onMouseDown(event) {
 
 	var startObject = {
@@ -127,24 +118,37 @@ function onMouseDown(event) {
 
 		hitResult = project.hitTest(event.point, hitOptions);
 
-		if (hitResult) {
-			if (hitResult.type == 'stroke') {
-				var hitItem = hitResult.item;
-				hitItem.remove();
-				view.draw();
-				socket.emit('Hit:remove', bee_room, hitItem.name);
-			}else if (hitResult.type == 'pixel') {
-				selectObject = hitResult.item;
-				selectObject.selected = true;
-			}
+			if (hitResult) {
+
+				if (leftUp_rightUP) {
+						SelectedLine(false);
+				}
+
+				if (hitResult.type == 'stroke'
+					&& hitResult.item.name != 'leftUp_rightUP'
+					&& hitResult.item.name != 'rightUp_rightDown'
+					&& hitResult.item.name != 'rightDown_leftDown'
+					&& hitResult.item.name != 'leftDown_leftUp'
+					&& hitResult.item.name != 'leftUpCircle'
+					&& hitResult.item.name != 'rightUpCircle'
+					&& hitResult.item.name != 'rightDownCircle'
+					&& hitResult.item.name != 'leftDownCircle') {
+
+					var hitItem = hitResult.item;
+					hitItem.remove();
+					view.draw();
+					socket.emit('Hit:remove', bee_room, hitItem.name);
+
+				}else if (hitResult.type == 'pixel') {
+					selectObject = hitResult.item;
+					SelectedLine(true);
+				}
 
 		}else{
-			if (!entire) {
-				selectObject_tr.remove();
-				selectObject.selected = false;
-				selectObject = null;
-			}
+			SelectedLine(false);
+			selectObject = null;
 		}
+
 
 	}else{
 			startPath(startObject, sessionId);
@@ -175,10 +179,25 @@ function onMouseDrag(event) {
 	}
 
 	if (isErase) {
-			//moveImage(selectObject);
-			console.log(selectObject);
-			//socket.emit('moveImage', moveImage);
-			makeTopRightCircle();
+
+		var group = new Group([selectObject, leftUp_rightUP, rightUp_rightDown, rightDown_leftDown, leftDown_leftUp,
+													leftUpCircle, rightUpCircle, rightDownCircle, leftDownCircle]);
+		group.position += event.delta;
+
+
+		// selectObject.position += event.delta;
+		// leftUp_rightUP.position += event.delta;
+		// rightUp_rightDown.position += event.delta;
+		// rightDown_leftDown.position += event.delta;
+		// leftDown_leftUp.position += event.delta;
+		//
+		// leftUpCircle.position += event.delta;
+		// rightUpCircle.position += event.delta;
+		// rightDownCircle.position += event.delta;
+		// leftDownCircle.position += event.delta;
+
+		socket.emit('item:move:progress', bee_room, sessionId, selectObject.name, event.delta);
+
 	}else{
 		continuePath(top, bottom, sessionId);
 		socket.emit('continuePath', topObject, bottomObject, sessionId, bee_room);
@@ -193,8 +212,11 @@ function onMouseUp(event) {
     y: event.point.y
   }
 
-	if (!isErase) {
+	if (isErase) {
 
+		socket.emit('item:move:end', bee_room,  selectObject.name, selectObject.position);
+
+	}else{
 		endPath(endObject, pathname, sessionId);
 	  socket.emit('endPath', endObject, pathname, color, thick, sessionId, bee_room);
 	}
@@ -203,14 +225,13 @@ function onMouseUp(event) {
 
 function onKeyUp(event) {
   if (event.key == "delete") {
-		var items = paper.project.selectedItems;
-		removeItem(items[0].name);
-		socket.emit('Hit:remove', bee_room, items[0].name);
+		// var items = paper.project.selectedItems;
+		removeItem(selectObject.name);
+		SelectedLine(false);
+		socket.emit('Hit:remove', bee_room, selectObject.name);
 
   }
 }
-
-
 
 function startPath(data, sessionId) {
 
@@ -235,8 +256,6 @@ function continuePath(top, bottom, sessionId) {
 
 }
 
-
-
 function endPath(data, pathname, sessionId) {
 
 	var path = paths[sessionId];
@@ -248,8 +267,6 @@ function endPath(data, pathname, sessionId) {
 	delete paths[sessionId]
 
 }
-
-
 
 function pathEndStore(data, pathname, color, thick, user, room) {
 	var path = paths[user];
@@ -279,18 +296,90 @@ function removeItem(name) {
 	view.draw();
 }
 
+function SelectedLine(isSelected){
+		if (isSelected) {
+			leftUp_rightUP = new Path.Line({
+				from: selectObject.bounds.topLeft,
+				to: selectObject.bounds.topRight,
+				name: 'leftUp_rightUP',
+				strokeColor: 'black'
+			});
 
-socket.emit('subscribe', {room:bee_room});
+			rightUp_rightDown = new Path.Line({
+				from: selectObject.bounds.topRight,
+				to: selectObject.bounds.bottomRight,
+				name: 'rightUp_rightDown',
+				strokeColor: 'black'
+			});
+
+			rightDown_leftDown = new Path.Line({
+				from: selectObject.bounds.bottomRight,
+				to: selectObject.bounds.bottomLeft,
+				name: 'rightDown_leftDown',
+				strokeColor: 'black'
+			});
+
+			leftDown_leftUp = new Path.Line({
+				from: selectObject.bounds.bottomLeft,
+				to: selectObject.bounds.topLeft,
+				name: 'leftDown_leftUp',
+				strokeColor: 'black'
+			});
+
+			//
+
+			leftUpCircle = new Shape.Circle({
+					center: selectObject.bounds.topLeft,
+					radius: 8,
+					name: 'leftUpCircle',
+					strokeColor: 'black',
+					fillColor: 'black'
+			});
+
+			rightUpCircle = new Shape.Circle({
+					center: selectObject.bounds.topRight,
+					radius: 8,
+					name: 'rightUpCircle',
+					strokeColor: 'black',
+					fillColor: 'black'
+			});
+
+			rightDownCircle = new Shape.Circle({
+					center: selectObject.bounds.bottomRight,
+					radius: 8,
+					name: 'rightDownCircle',
+					strokeColor: 'black',
+					fillColor: 'black'
+			});
+
+			leftDownCircle = new Shape.Circle({
+					center: selectObject.bounds.bottomLeft,
+					radius: 8,
+					name: 'leftDownCircle',
+					strokeColor: 'black',
+					fillColor: 'black'
+			});
+		}else{
+			leftUp_rightUP.remove();
+			rightUp_rightDown.remove();
+			rightDown_leftDown.remove();
+			leftDown_leftUp.remove();
+
+			leftUpCircle.remove();
+			rightUpCircle.remove();
+			rightDownCircle.remove();
+			leftDownCircle.remove();
+		}
+}
+
 
 socket.on('connect', function () {
 	console.log('connected');
 	socket.emit('subscribe', {room:bee_room});
 });
 
-
 socket.on('user', function(msg){
 	sessionId = msg;
-	console.log(sessionId);
 });
 
 socket.on('project:load', function(json) {
@@ -302,11 +391,9 @@ socket.on('project:load', function(json) {
 
 });
 
-
 socket.on('project:load:error', function() {
   console.log('project:load:error');
 });
-
 
 socket.on('loading:start', function() {
   console.log('loading:start');
@@ -340,8 +427,25 @@ socket.on('Hit:remove', function(name) {
 socket.on('image:add', function(img, position, name) {
 	var raster = new Raster(img);
 	raster.position = new Point(position[1], position[2]);
+
+		//
+		// console.log(item_move_delta);
+
+
 	raster.name = name;
 	view.draw();
 	console.log(raster);
 
 });
+
+socket.on('item:move', function(itemName, delta) {
+    if (project.activeLayer.children[itemName]) {
+      project.activeLayer.children[itemName].position += new Point(delta[1], delta[2]);
+    }
+    view.draw();
+});
+
+// Periodically save drawing
+setInterval(function(){
+
+}, 1000);

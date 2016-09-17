@@ -86,6 +86,7 @@ io.sockets.on('connection', function(socket){
   });
 
   socket.on('Hit:remove', function(room, name){
+    console.log(name);
     socket.broadcast.to(room).emit('Hit:remove', name);
     draw.removeHitItem(room, name);
   });
@@ -93,6 +94,23 @@ io.sockets.on('connection', function(socket){
   socket.on('image:add', function(room, img, position, name){
     socket.broadcast.to(room).emit('image:add', img, position, name);
     draw.addImage(room, img, position, name);
+  });
+
+  // User moves one or more items on their canvas - progress
+  socket.on('item:move:progress', function(room, uid, itemName, delta) {
+    //draw.moveItemsProgress(room, uid, itemNames, delta);
+    console.log(delta);
+    if (itemName) {
+      io.sockets.in(room).emit('item:move', itemName, delta);
+    }
+  });
+
+  // User moves one or more items on their canvas - end
+  socket.on('item:move:end', function(room, itemName, position) {
+    draw.moveItemsEnd(room, itemName, position);
+    // if (itemName) {
+    //   io.sockets.in(room).emit('item:move', uid, itemName, delta);
+    // }
   });
 
   socket.on('disconnect', function(){

@@ -104,8 +104,8 @@ exports.pathStoreFinal = function (object, user, room) {
 // Remove an item from the canvas
 exports.removeHitItem = function(room, itemName) {
   var project = projects[room].project;
-  if (project && project.activeLayer && project.activeLayer._namedChildren[itemName] && project.activeLayer._namedChildren[itemName][0]) {
-    project.activeLayer._namedChildren[itemName][0].remove();
+  if (project && project.activeLayer && project.activeLayer.children[itemName]) {
+    project.activeLayer.children[itemName].remove();
     db.storeProject(room);
   }
 }
@@ -119,4 +119,35 @@ exports.addImage = function(room, img, position, name) {
     raster.name = name;
     db.storeProject(room);
   }
+}
+
+// Move one or more existing items on the canvas
+exports.moveItemsProgress = function(room, itemName, delta) {
+  if (project.activeLayer.children[itemName]) {
+    project.activeLayer.children[itemName].position += new Point(delta[1], delta[2]);
+  }
+  var project = projects[room].project;
+  if (project && project.activeLayer) {
+
+
+      var itemName = itemNames[x];
+      var namedChildren = project.activeLayer._namedChildren;
+      if (namedChildren && namedChildren[itemName] && namedChildren[itemName][0]) {
+        project.activeLayer._namedChildren[itemName][0].position.x += delta[1];
+        project.activeLayer._namedChildren[itemName][0].position.y += delta[2];
+      }
+
+  }
+}
+
+// Move one or more existing items on the canvas
+// and write to DB
+exports.moveItemsEnd = function(room, itemName, position) {
+  var project = projects[room].project;
+
+  if (project && project.activeLayer && project.activeLayer.children[itemName]) {
+    project.activeLayer.children[itemName].position.x = position[1];
+    project.activeLayer.children[itemName].position.y = position[2];
+  }
+  db.storeProject(room);
 }
